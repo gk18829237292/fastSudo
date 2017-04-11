@@ -1,0 +1,69 @@
+#!/bin/bash
+# 快速sudo操作，省去输密码 和重复输入的烦恼
+password=''
+pwdtxt='.pwd'
+
+#读取密码
+function readPwd(){
+	if [ -f $pwdtxt ];then
+		password=$(cat $pwdtxt)
+	else
+		echo "can't find password file you can install again"
+	fi
+}
+
+#设置密码
+function setPwd(){
+	read -p "input you password:" pwd
+	echo $pwd > $pwdtxt
+}
+
+# 获取上次输入的命令
+function getLastInput(){
+	history -w
+	lastInput=$(tail -2 ~/.bash_history | head -1)
+}
+
+# 再次 sudo 输入
+function inputAgain(){
+	echo "sudo $lastInput"
+	echo $password | sudo -S $lastInput
+}
+
+#字符串替换
+function install(){
+	#获取文件名称
+	filename=$0
+	filename=${filename##*/}
+	#获取文件路径
+	filepath=$(pwd)
+	#获取文件绝对路径
+	fullpath=$filepath/$filename
+	
+	#写入~/.bashrc
+	echo alias fsd=\"source $fullpath\" >> ~/.bashrc
+	echo -e  "install success and input\e[1;31m source ~/.bashrc\e[0m to init it  "
+
+}
+
+function start(){
+	case $# in
+		"0")
+			readPwd
+			getLastInput
+			inputAgain
+			;;
+		"1")
+			if [ $1 == 'install' ];then
+				setPwd
+				install
+			else
+				echo "error input try again"
+			fi
+			;;
+		"*")
+			echo "error input try again";;
+	esac
+}
+start $@
+
