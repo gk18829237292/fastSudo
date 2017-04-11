@@ -7,8 +7,10 @@ pwdtxt='.pwd'
 function readPwd(){
 	if [ -f $pwdtxt ];then
 		password=$(cat $pwdtxt)
+		return 0
 	else
 		echo "can't find password file you can install again"
+		return 1
 	fi
 }
 
@@ -50,8 +52,10 @@ function start(){
 	case $# in
 		"0")
 			readPwd
-			getLastInput
-			inputAgain
+			if [ $? -eq 0 ];then
+				getLastInput
+				inputAgain
+			fi
 			;;
 		"1")
 			if [ $1 == 'install' ];then
