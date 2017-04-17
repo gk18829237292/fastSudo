@@ -1,12 +1,32 @@
 #!/bin/bash
-# 快速sudo操作，省去输密码 和重复输入的烦恼
+# 功能:
+# 	快速sudo操作，省去输密码 和重复输入的烦恼
+# history
+# 1.2017年04月12日10:59:02
+#	修改pwd文件位置
+# 2.2017年04月12日11:29:50
+#	修改 histroy -w -> history -a 这样不会覆盖历史命令
+# 3.2017年04月13日16:08:02
+#  如果是apt或者apt-get，替换成apt -y
+# 4.2017年04月16日19:57:57
+#  解决bugs1,之前先echo pwd | sudo 一下就好
+# hard:
+# 1.目前的操作方式会造成~/.bashrc 有好多垃圾信息，但是直接删除信息又不安全。
+# 2.当前密码保存的方式
+# bugs:
+# 1.安装需要确认的时候会出错(2017年04月13日16:07:50 解决)
+
+
 password=''
-pwdtxt='.pwd'
+pwdtxt='/home/kegao/.pwd'
 
 #读取密码
 function readPwd(){
+	#判断密码文件是否存在
 	if [ -f $pwdtxt ];then
+		#$() 命令执行 且把返回值给=前面的变量。$() 等价于``
 		password=$(cat $pwdtxt)
+		echo $password | sudo -S cat $pwdtxt &>/dev/null
 		return 0
 	else
 		echo "can't find password file you can install again"
@@ -16,20 +36,24 @@ function readPwd(){
 
 #设置密码
 function setPwd(){
+	#捕获用户输入
 	read -p "input you password:" pwd
+	#把用户输入 放入 密码文件中，覆盖填充
 	echo $pwd > $pwdtxt
 }
 
-# 获取上次输入的命令
+# 获取上次输入的命令 这只是一种方法，还有很多方法可以达到相同的效果
 function getLastInput(){
-	history -w
+	# 这里注意是要source fastsudo 才有用，把目前所有的命令 新增如到 histfiles中。
+	history -a
 	lastInput=$(tail -2 ~/.bash_history | head -1)
 }
 
 # 再次 sudo 输入
 function inputAgain(){
 	echo "sudo $lastInput"
-	echo $password | sudo -S $lastInput
+	#免除密码输入
+	sudo $lastInput
 }
 
 #字符串替换
@@ -45,15 +69,20 @@ function install(){
 	#写入~/.bashrc
 	echo alias fsd=\"source $fullpath\" >> ~/.bashrc
 	echo -e  "install success and input\e[1;31m source ~/.bashrc\e[0m to init it  "
+}
 
+function isApt(){
+	#如果是 apt的话，加上apt -y
+	lastInput=$(echo $lastInput | sed 's/\bapt\(-get\)\?\b/apt -y/')
 }
 
 function start(){
-	case $# in
+	case $# in #判断是运行还是安装，所谓安装就是把fsd写入bashrc中去。
 		"0")
 			readPwd
 			if [ $? -eq 0 ];then
 				getLastInput
+#				isApt
 				inputAgain
 			fi
 			;;
@@ -69,5 +98,7 @@ function start(){
 			echo "error input try again";;
 	esac
 }
+# $@ $# $0 $1 $$
 start $@
+
 
