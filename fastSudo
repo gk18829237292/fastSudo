@@ -18,7 +18,7 @@
 
 
 password=''
-pwdtxt='/home/kegao/.pwd'
+pwdtxt="${HOME}/.pwd"
 
 #读取密码
 function readPwd(){

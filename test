@@ -1,8 +1,0 @@
-#!/bin/bash
-
-function show(){
-	echo "function " $0 $1 $2 $3 # ./test 4 5 6
-}
-
-echo "shell " $0 $1 $2 $3 # ./test 1 2 3
-show 4 5 6
